@@ -101,7 +101,7 @@ h3{
   font-size:1.02rem;
 }
 
-/* BOTONES */
+/* BOTÓN */
 
 .button{
   border:1px solid var(--ink);
@@ -127,17 +127,21 @@ h3{
 /* FOTOGRAFÍAS */
 
 .photos{
-  padding:105px 0;
+  width:min(850px,calc(100% - 44px));
+  margin:0 auto;
+  padding:85px 0 105px;
+
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:34px;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:24px;
+
   align-items:start;
 }
 
 .photo-card{
+  width:100%;
   margin:0;
   padding:0;
-  width:100%;
   overflow:hidden;
   background:transparent;
 }
@@ -149,10 +153,11 @@ h3{
   max-width:100%;
   margin:0;
   padding:0;
+
   object-fit:contain;
 }
 
-/* Evita cualquier placeholder antiguo */
+/* Ocultar restos del antiguo sistema de placeholders */
 
 .photo-placeholder{
   display:none !important;
@@ -321,7 +326,7 @@ fieldset{
   font-size:.86rem;
 }
 
-/* PIE */
+/* FOOTER */
 
 footer{
   text-align:center;
@@ -336,7 +341,7 @@ footer span{
   margin:0 8px;
 }
 
-/* ANIMACIONES */
+/* ANIMACIÓN */
 
 .reveal{
   opacity:0;
@@ -361,9 +366,12 @@ footer span{
   }
 
   .photos{
-    padding:65px 0;
-    gap:16px;
-    grid-template-columns:1fr;
+    width:calc(100% - 32px);
+    padding:60px 0 75px;
+    gap:14px;
+
+    /* Dos fotos también en móvil */
+    grid-template-columns:repeat(2,minmax(0,1fr));
   }
 
   .photo-card{
