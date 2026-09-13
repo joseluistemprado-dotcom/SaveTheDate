@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="es">
 <head>
@@ -12,18 +13,200 @@
 </head>
 <body>
   <main>
+
     <section class="hero">
-      <p class="eyebrow">Bodas de Plata</p><h1>Vanessa <i>&</i> Raúl</h1><p class="anniversary">25 años juntos · 24 de abril</p><div class="ornament">✦</div>
-      <p class="intro">Veinticinco años de vida compartida, de familia y de recuerdos.<br>Nos encantaría celebrar este día junto a quienes forman parte de nuestra historia.</p><a class="button" href="#confirmacion">Confirmar asistencia</a>
+      <p class="eyebrow">Bodas de Plata</p>
+      <h1>Vanessa <i>&</i> Raúl</h1>
+      <p class="anniversary">25 años juntos · 24 de abril</p>
+      <div class="ornament">✦</div>
+      <p class="intro">
+        Veinticinco años de vida compartida, de familia y de recuerdos.<br>
+        Nos encantaría celebrar este día junto a quienes forman parte de nuestra historia.
+      </p>
+      <a class="button" href="#confirmacion">Confirmar asistencia</a>
     </section>
+
     <section class="photos wrap reveal" aria-label="Fotografías de Vanessa y Raúl">
-      <figure class="photo-card" style="min-height:420px;margin:0;position:relative;overflow:hidden"><img src="/images/vanessa-raul-1.jpg" alt="Vanessa y Raúl" style="position:absolute;z-index:1;width:100%;height:100%;object-fit:cover" onerror="this.hidden=true"><div class="photo-placeholder"><span>Fotografía 01</span><small>vanessa-raul-1.jpg</small></div></figure>
-      <figure class="photo-card second" style="min-height:420px;margin:0;position:relative;overflow:hidden;transform:translateY(44px)"><img src="/images/vanessa-raul-2.jpg" alt="Vanessa y Raúl" style="position:absolute;z-index:1;width:100%;height:100%;object-fit:cover" onerror="this.hidden=true"><div class="photo-placeholder"><span>Fotografía 02</span><small>vanessa-raul-2.jpg</small></div></figure>
+
+      <figure class="photo-card" style="margin:0;position:relative;overflow:hidden">
+        <img
+          src="/images/vanessa-raul-1.jpg"
+          alt="Vanessa y Raúl"
+          onerror="this.hidden=true"
+          style="display:block;width:100%;height:auto;object-fit:contain"
+        >
+        <div class="photo-placeholder">
+          <span>Fotografía 01</span>
+          <small>vanessa-raul-1.jpg</small>
+        </div>
+      </figure>
+
+      <figure class="photo-card second" style="margin:0;position:relative;overflow:hidden">
+        <img
+          src="/images/vanessa-raul-2.jpg"
+          alt="Vanessa y Raúl"
+          onerror="this.hidden=true"
+          style="display:block;width:100%;height:auto;object-fit:contain"
+        >
+        <div class="photo-placeholder">
+          <span>Fotografía 02</span>
+          <small>vanessa-raul-2.jpg</small>
+        </div>
+      </figure>
+
     </section>
-    <section class="day wrap reveal"><p class="eyebrow">El día · 24 de abril</p><h2>Una tarde para celebrar juntos</h2><div class="timeline"><div><time>16:30</time><h3>Ceremonia</h3><p>Parroquia de la Asunción</p><a class="text-link" href="https://www.google.com/maps/place//data=!4m2!3m1!1s0xd6051ced79d4add:0xe5574ac7520839b1?sa=X&amp;ved=1t:8290&amp;ictx=111" target="_blank" rel="noopener noreferrer">Ver ubicación</a></div><span class="line" aria-hidden="true">↓</span><div><time>Después</time><h3>Picoteo y celebración</h3><p>Restaurante El Perelló</p><a class="text-link" href="https://www.google.com/maps/place/Restaurante+El+Perell%C3%B3/@39.4370918,-0.4930915,17z/data=!3m1!4b1!4m6!3m5!1s0xd6056ad9f7bcf0d:0x16b0fb8520f6daf7!8m2!3d39.4370918!4d-0.4905166!16s%2Fg%2F1tdzhb0y?entry=ttu&amp;g_ep=EgoyMDI2MDkwOS4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Ver ubicación</a></div></div></section>
-    <section id="confirmacion" class="rsvp reveal"><div class="wrap narrow"><p class="eyebrow">Confirmación</p><h2>¿Podremos contar contigo?</h2><p class="sub">Te agradeceremos que nos confirmes tu asistencia.</p><form id="rsvp-form" novalidate><div class="honeypot" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off"></label></div><div class="fields"><label>Nombre<input name="firstName" required maxlength="60" autocomplete="given-name"></label><label>Apellidos<input name="lastName" required maxlength="100" autocomplete="family-name"></label></div><fieldset><legend>¿Asistirás?</legend><div class="choices"><label><input type="radio" name="attending" value="yes" required> <span>Sí, allí estaremos</span></label><label><input type="radio" name="attending" value="no"> <span>No podremos asistir</span></label></div></fieldset><label id="attendees-field" hidden>Número de asistentes<input name="attendees" type="number" min="1" max="20" inputmode="numeric" value="1"></label><label>Comentarios <em>(opcional)</em><textarea name="comments" maxlength="700" rows="4" placeholder="Puedes dejarnos una nota si lo deseas."></textarea></label><p class="form-error" role="alert"></p><button class="button" type="submit">Enviar confirmación</button></form><div id="thanks" hidden aria-live="polite"><div class="ornament">✦</div><h2></h2><p></p><a href="/" class="text-link">Volver a la invitación</a></div></div></section>
-    <footer>Con cariño, Vanessa y Raúl <span>·</span> Bodas de Plata</footer>
+
+    <section class="day wrap reveal">
+      <p class="eyebrow">El día · 24 de abril</p>
+      <h2>Una tarde para celebrar juntos</h2>
+
+      <div class="timeline">
+
+        <div>
+          <time>16:30</time>
+          <h3>Ceremonia</h3>
+          <p>Parroquia de la Asunción</p>
+          <a
+            class="text-link"
+            href="https://www.google.com/maps/place//data=!4m2!3m1!1s0xd6051ced79d4add:0xe5574ac7520839b1?sa=X&amp;ved=1t:8290&amp;ictx=111"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver ubicación
+          </a>
+        </div>
+
+        <span class="line" aria-hidden="true">↓</span>
+
+        <div>
+          <time>Después</time>
+          <h3>Picoteo y celebración</h3>
+          <p>Restaurante El Perelló</p>
+          <a
+            class="text-link"
+            href="https://www.google.com/maps/place/Restaurante+El+Perell%C3%B3/@39.4370918,-0.4930915,17z/data=!3m1!4b1!4m6!3m5!1s0xd6056ad9f7bcf0d:0x16b0fb8520f6daf7!8m2!3d39.4370918!4d-0.4905166!16s%2Fg%2F1tdzhb0y?entry=ttu&amp;g_ep=EgoyMDI2MDkwOS4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver ubicación
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="confirmacion" class="rsvp reveal">
+      <div class="wrap narrow">
+
+        <p class="eyebrow">Confirmación</p>
+        <h2>¿Podremos contar contigo?</h2>
+        <p class="sub">Te agradeceremos que nos confirmes tu asistencia.</p>
+
+        <form id="rsvp-form" novalidate>
+
+          <div class="honeypot" aria-hidden="true">
+            <label>
+              Website
+              <input name="website" tabindex="-1" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="fields">
+            <label>
+              Nombre
+              <input
+                name="firstName"
+                required
+                maxlength="60"
+                autocomplete="given-name"
+              >
+            </label>
+
+            <label>
+              Apellidos
+              <input
+                name="lastName"
+                required
+                maxlength="100"
+                autocomplete="family-name"
+              >
+            </label>
+          </div>
+
+          <fieldset>
+            <legend>¿Asistirás?</legend>
+
+            <div class="choices">
+              <label>
+                <input
+                  type="radio"
+                  name="attending"
+                  value="yes"
+                  required
+                >
+                <span>Sí, allí estaremos</span>
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="attending"
+                  value="no"
+                >
+                <span>No podremos asistir</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <label id="attendees-field" hidden>
+            Número de asistentes
+            <input
+              name="attendees"
+              type="number"
+              min="1"
+              max="20"
+              inputmode="numeric"
+              value="1"
+            >
+          </label>
+
+          <label>
+            Comentarios <em>(opcional)</em>
+            <textarea
+              name="comments"
+              maxlength="700"
+              rows="4"
+              placeholder="Puedes dejarnos una nota si lo deseas."
+            ></textarea>
+          </label>
+
+          <p class="form-error" role="alert"></p>
+
+          <button class="button" type="submit">
+            Enviar confirmación
+          </button>
+
+        </form>
+
+        <div id="thanks" hidden aria-live="polite">
+          <div class="ornament">✦</div>
+          <h2></h2>
+          <p></p>
+          <a href="/" class="text-link">Volver a la invitación</a>
+        </div>
+
+      </div>
+    </section>
+
+    <footer>
+      Con cariño, Vanessa y Raúl
+      <span>·</span>
+      Bodas de Plata
+    </footer>
+
   </main>
+
   <script src="/app.js"></script>
 </body>
 </html>
+```
