@@ -31,7 +31,7 @@ Comparte únicamente la URL principal con los invitados. El panel privado está 
 - `public/admin.html`: panel con resumen, filtros, pendientes, importación CSV, exportación e impresión.
 - `wrangler.jsonc`: configuración de Cloudflare, assets y vínculo a D1.
 
-Las tablas `guests`, `responses`, `admin_users` y `sessions` se crean automáticamente. El primer usuario administrador se genera con PBKDF2 y la sesión usa una cookie `HttpOnly`, `Secure` y `SameSite=Strict`.
+Las tablas `guests`, `responses`, `admin_users` y `sessions` se crean automáticamente. El usuario administrador se genera con PBKDF2 y la sesión usa una cookie `HttpOnly`, `Secure` y `SameSite=Strict`. Si cambias `ADMIN_USERNAME` o `ADMIN_PASSWORD` en los secretos de Cloudflare y vuelves a desplegar, el acceso se sincroniza automáticamente: sirve también para recuperar una contraseña olvidada.
 
 ## Ejecutar localmente
 
