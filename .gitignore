@@ -1,7 +1,6 @@
 node_modules/
-.env
-data/*.sqlite
-data/*.sqlite-*
+.dev.vars
+.wrangler/
 public/images/*.jpg
 public/images/*.jpeg
 public/images/*.png
