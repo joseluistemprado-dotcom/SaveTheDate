@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="es">
 <head>
@@ -25,32 +26,43 @@
       <a class="button" href="#confirmacion">Confirmar asistencia</a>
     </section>
 
+    <!-- FOTOGRAFÍAS -->
     <section class="photos wrap reveal" aria-label="Fotografías de Vanessa y Raúl">
 
-      <figure class="photo-card" style="margin:0;position:relative;overflow:hidden">
+      <figure class="photo-card">
         <img
           src="/images/vanessa-raul-1.jpg"
-          alt="Vanessa y Raúl"
-          onerror="this.hidden=true"
-          style="display:block;width:100%;height:auto;object-fit:contain"
+          alt="Vanessa y Raúl - Fotografía 1"
+          loading="eager"
+          onerror="this.style.display='none'"
         >
-        <div class="photo-placeholder">
-          <span>Fotografía 01</span>
-          <small>vanessa-raul-1.jpg</small>
-        </div>
       </figure>
 
-      <figure class="photo-card second" style="margin:0;position:relative;overflow:hidden">
+      <figure class="photo-card">
         <img
           src="/images/vanessa-raul-2.jpg"
-          alt="Vanessa y Raúl"
-          onerror="this.hidden=true"
-          style="display:block;width:100%;height:auto;object-fit:contain"
+          alt="Vanessa y Raúl - Fotografía 2"
+          loading="lazy"
+          onerror="this.style.display='none'"
         >
-        <div class="photo-placeholder">
-          <span>Fotografía 02</span>
-          <small>vanessa-raul-2.jpg</small>
-        </div>
+      </figure>
+
+      <figure class="photo-card">
+        <img
+          src="/images/vanessa-raul-3.jpg"
+          alt="Vanessa y Raúl - Fotografía 3"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
+      </figure>
+
+      <figure class="photo-card">
+        <img
+          src="/images/vanessa-raul-4.jpg"
+          alt="Vanessa y Raúl - Fotografía 4"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >
       </figure>
 
     </section>
@@ -208,3 +220,4 @@
   <script src="/app.js"></script>
 </body>
 </html>
+```
