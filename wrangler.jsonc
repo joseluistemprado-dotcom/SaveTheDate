@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bodas-de-plata-vanessa-raul",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-02-24",
+  "assets": { "directory": "./public", "binding": "ASSETS", "html_handling": "auto-trailing-slash" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "bodas-de-plata", "database_id": "91cdb7e3-9534-4f7b-b93e-f7fdf5a9ac98" }
+  ]
+}
