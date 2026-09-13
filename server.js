@@ -21,6 +21,18 @@ CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY, username TEXT UN
 
 const app = express();
 if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) throw new Error('SESSION_SECRET es obligatorio en producción.');
+async function bootstrapAdmin() {
+  const existing = db.prepare('SELECT id FROM admin_users LIMIT 1').get();
+  if (existing) return;
+  const username = clean(process.env.ADMIN_USERNAME, 80);
+  const password = String(process.env.ADMIN_PASSWORD || '');
+  if (!username || !password) {
+    console.warn('No se ha creado ningún administrador: define ADMIN_USERNAME y ADMIN_PASSWORD.');
+    return;
+  }
+  db.prepare('INSERT INTO admin_users(username,password_hash) VALUES (?,?)').run(username, await bcrypt.hash(password, 12));
+  console.log(`Administrador inicial creado: ${username}`);
+}
 app.set('trust proxy', 1);
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(express.json({ limit: '30kb' }));
@@ -63,4 +75,5 @@ app.get('/api/admin/guests', adminOnly, (req,res) => res.json({ stats: stats(), 
 app.post('/api/admin/import', adminOnly, (req,res) => { const csv = String(req.body?.csv || '').replace(/^\uFEFF/, ''); const lines = csv.split(/\r?\n/).filter(Boolean); if (!lines.length) return res.status(400).json({error:'El CSV está vacío.'}); const insert = db.prepare('INSERT INTO guests(first_name,last_name) SELECT ?,? WHERE NOT EXISTS(SELECT 1 FROM guests WHERE lower(first_name)=lower(?) AND lower(last_name)=lower(?))'); let count=0; const tx=db.transaction(()=>lines.slice(1).forEach(line=>{ const [f,...rest]=line.split(','); const l=rest.join(','); const first=clean(f,60),last=clean(l,100); if(first&&last) count+=insert.run(first,last,first,last).changes; })); tx(); res.json({count}); });
 app.get('/api/admin/export.csv', adminOnly, (req,res) => { const esc=v=>`"${String(v??'').replaceAll('"','""')}"`; const data=rows().map(r=>[r.first_name,r.last_name,r.response_id?(r.attending?'Sí':'No'):'Pendiente',r.attendees||'',r.comments||'',r.created_at||''].map(esc).join(',')); res.set({'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="confirmaciones.csv"'}).send('\uFEFFNombre,Apellidos,Asistencia,Número de asistentes,Comentarios,Fecha de respuesta\n'+data.join('\n')); });
 async function sendEmail() { if (!process.env.ADMIN_EMAIL || !process.env.SMTP_HOST) return; const transporter=nodemailer.createTransport({host:process.env.SMTP_HOST,port:Number(process.env.SMTP_PORT||587),secure:Number(process.env.SMTP_PORT)===465,auth:{user:process.env.SMTP_USER,password:process.env.SMTP_PASSWORD}}); const s=stats(), latest=db.prepare('SELECT first_name,last_name,attending,attendees FROM responses ORDER BY created_at DESC LIMIT 20').all(); await transporter.sendMail({from:process.env.SMTP_FROM||process.env.SMTP_USER,to:process.env.ADMIN_EMAIL,subject:'Actualización de asistencia - Vanessa & Raúl',text:`Confirmados: ${s.confirmed}\nNo asistirán: ${s.declined}\nPendientes: ${s.pending}\nPersonas confirmadas: ${s.people}\n\nRespuestas recientes:\n${latest.map(x=>`${x.first_name} ${x.last_name}: ${x.attending?'Confirmada — '+x.attendees+' personas':'No asistirá'}`).join('\n')}`}); }
-const port=process.env.PORT||3000; app.listen(port,()=>console.log(`Invitación disponible en http://localhost:${port}`));
+const port=process.env.PORT||3000;
+bootstrapAdmin().then(() => app.listen(port,()=>console.log(`Invitación disponible en http://localhost:${port}`))).catch(error => { console.error(error); process.exit(1); });

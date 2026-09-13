@@ -16,8 +16,7 @@ Invitación digital personal con confirmaciones persistentes y un panel privado 
 1. Instala Node.js 20 o superior.
 2. Ejecuta `npm install`.
 3. Copia `.env.example` como `.env` y completa al menos `SESSION_SECRET`, `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
-4. Crea el usuario privado con `npm run create-admin`.
-5. Inicia la aplicación con `npm run dev` y abre `http://localhost:3000`.
+4. Inicia la aplicación con `npm run dev` y abre `http://localhost:3000`. Al primer inicio, el administrador se crea automáticamente a partir de esas dos variables. El comando `npm run create-admin` continúa disponible para cambiarlo manualmente más adelante.
 
 La web pública está en `/` y el panel protegido, en `/admin`.
 
@@ -44,10 +43,11 @@ En producción, monta un disco/volumen persistente en el directorio `data/`; sin
 ## Despliegue público
 
 1. Sube este repositorio a GitHub.
-2. Crea un servicio web Node en Render/Railway/Fly.io conectado al repositorio.
-3. Establece el comando de instalación `npm install`, el de inicio `npm start` y todas las variables anteriores en el panel de secretos del proveedor.
-4. Adjunta un volumen persistente al proyecto y haz que conserve el directorio `data/`.
-5. Publica con HTTPS y visita la URL asignada; el enlace de invitados será la raíz del dominio (o el subpath que configure el proveedor).
+2. En Render, crea un **Blueprint** desde el repositorio: el archivo `render.yaml` incluido crea el servicio, el disco persistente, el health check y genera automáticamente `SESSION_SECRET`.
+3. Render solicitará los valores secretos marcados como manuales: define `ADMIN_USERNAME`, `ADMIN_PASSWORD` y, si quieres avisos de correo, las variables `ADMIN_EMAIL` y `SMTP_*`.
+4. Publica con HTTPS y visita la URL asignada; el enlace de invitados será la raíz del dominio (o el subpath que configure el proveedor). El nombre propuesto produce una URL similar a `https://bodas-de-plata-vanessa-raul.onrender.com` si está disponible.
+
+> El despliegue se puede dejar totalmente definido en este repositorio, como ahora, pero crear una URL pública requiere autorizar el acceso a una cuenta de Render y a un repositorio GitHub. Nunca debemos crear ni usar esas cuentas, ni recibir sus contraseñas, desde el código.
 
 ## Fotografías
 
