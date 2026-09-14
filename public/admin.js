@@ -239,27 +239,38 @@ async function loadAlbum() {
   $('#album-list').innerHTML =
     data.photos
       .map(photo => {
+        const status =
+          photo.status === 'approved'
+            ? '✓ Publicado'
+            : photo.status === 'rejected'
+              ? '✕ Oculto'
+              : 'Pendiente';
+
         const action =
-          photo.status === 'pending'
-            ? (
-              '<div class="album-actions">' +
-              '<button class="button album-approve" data-id="' +
-              photo.id +
-              '">✓ Aprobar</button>' +
-              '<button class="plain album-reject" data-id="' +
-              photo.id +
-              '">Rechazar</button>' +
-              '</div>'
-            )
-            : (
-              '<div class="album-status">' +
-              (
-                photo.status === 'approved'
-                  ? '✓ Publicado'
-                  : '✕ Rechazado'
-              ) +
-              '</div>'
-            );
+          '<div class="album-status">' +
+          status +
+          '</div>' +
+          '<div class="album-actions">' +
+          (
+            photo.status !== 'approved'
+              ? '<button class="button album-approve" data-id="' +
+                photo.id +
+                '">Aprobar</button>'
+              : '<button class="plain album-reject" data-id="' +
+                photo.id +
+                '">Quitar del álbum</button>'
+          ) +
+          (
+            photo.status === 'pending'
+              ? '<button class="plain album-reject" data-id="' +
+                photo.id +
+                '">Rechazar</button>'
+              : ''
+          ) +
+          '<button class="plain album-delete" data-id="' +
+          photo.id +
+          '">Borrar</button>' +
+          '</div>';
 
         return (
           '<article class="album-admin-card">' +
@@ -316,6 +327,17 @@ async function loadAlbum() {
           'reject'
         );
     });
+
+  document
+    .querySelectorAll(
+      '.album-delete'
+    )
+    .forEach(button => {
+      button.onclick = () =>
+        deleteAlbumPhoto(
+          button.dataset.id
+        );
+    });
 }
 
 async function reviewAlbum(
@@ -330,6 +352,30 @@ async function reviewAlbum(
       action,
       {
         method: 'POST'
+      }
+    );
+
+    await loadAlbum();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteAlbumPhoto(id) {
+  if (
+    !confirm(
+      '¿Borrar esta foto definitivamente?'
+    )
+  ) {
+    return;
+  }
+
+  try {
+    await api(
+      '/api/admin/album/' +
+      id,
+      {
+        method: 'DELETE'
       }
     );
 
@@ -399,6 +445,48 @@ $('#logout').onclick =
 
 $('#album-filter').onchange =
   loadAlbum;
+
+$('#admin-album-form').onsubmit =
+  async event => {
+    event.preventDefault();
+
+    const form =
+      event.currentTarget;
+
+    const button =
+      form.querySelector(
+        'button[type="submit"]'
+      );
+
+    const result =
+      $('#admin-album-result');
+
+    button.disabled = true;
+    result.textContent = '';
+
+    try {
+      const data =
+        await api(
+          '/api/admin/album/photos',
+          {
+            method: 'POST',
+            body: new FormData(form)
+          }
+        );
+
+      form.reset();
+      result.textContent =
+        ' ' + data.count + ' foto(s) publicadas.';
+
+      $('#album-filter').value = 'approved';
+      await loadAlbum();
+    } catch (error) {
+      result.textContent =
+        error.message;
+    } finally {
+      button.disabled = false;
+    }
+  };
 
 let timer;
 
