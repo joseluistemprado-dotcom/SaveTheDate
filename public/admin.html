@@ -1,1 +1,217 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Administración — Vanessa & Raúl</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/admin.css"></head><body><main class="admin wrap"><header><a href="/" class="back">← Invitación</a><p class="eyebrow">Bodas de Plata</p><h1>Vanessa & Raúl</h1><button id="logout" class="plain" hidden>Cerrar sesión</button></header><section id="login" class="login"><h2>Acceso privado</h2><form id="login-form"><label>Usuario<input name="username" required autocomplete="username"></label><label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label><p class="form-error"></p><button class="button">Entrar</button></form></section><section id="dashboard" hidden><div class="toolbar"><h2>Resumen de invitados</h2><div><button id="export" class="plain">Exportar CSV</button><button id="print" class="plain">Imprimir</button></div></div><div id="cards" class="cards"></div><div class="admin-grid"><section class="panel"><div class="panel-title"><h3>Pendientes de confirmar</h3><button id="copy-pending" class="plain">Copiar lista</button></div><ul id="pending"></ul></section><section class="panel"><h3>Actividad reciente</h3><ul id="recent"></ul></section></div><section class="panel import"><h3>Importar invitados</h3><p>Sube o pega un CSV con cabecera <code>nombre,apellidos</code>. Las personas ya existentes no se duplicarán.</p><textarea id="csv" rows="4" placeholder="nombre,apellidos&#10;Ana,Pérez García"></textarea><button id="import" class="plain">Importar CSV</button><span id="import-result"></span></section><section class="panel guests"><div class="panel-title"><h3>Listado de invitados</h3><div class="filters"><input id="search" placeholder="Buscar por nombre" aria-label="Buscar por nombre"><select id="filter"><option value="all">Todos</option><option value="confirmed">Confirmados</option><option value="declined">No asistirán</option><option value="pending">Pendientes</option></select><select id="order"><option value="date">Ordenar por fecha</option><option value="name">Ordenar por nombre</option></select></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Apellidos</th><th>Asistencia</th><th>Personas</th><th>Comentarios</th><th>Fecha</th></tr></thead><tbody id="guest-rows"></tbody></table></div></section></section></main><script src="/admin.js"></script></body></html>
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Administración — Vanessa & Raúl</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+
+<main class="admin wrap">
+
+<header>
+<a href="/" class="back">← Invitación</a>
+<p class="eyebrow">Bodas de Plata</p>
+<h1>Vanessa & Raúl</h1>
+<button id="logout" class="plain" hidden>Cerrar sesión</button>
+</header>
+
+<section id="login" class="login">
+
+<h2>Acceso privado</h2>
+
+<form id="login-form">
+
+<label>
+Usuario
+<input name="username" required autocomplete="username">
+</label>
+
+<label>
+Contraseña
+<input type="password" name="password" required autocomplete="current-password">
+</label>
+
+<p class="form-error"></p>
+
+<button class="button">Entrar</button>
+
+</form>
+
+</section>
+
+<section id="dashboard" hidden>
+
+<div class="toolbar">
+
+<h2>Resumen de invitados</h2>
+
+<div>
+<button id="export" class="plain">Exportar CSV</button>
+<button id="print" class="plain">Imprimir</button>
+</div>
+
+</div>
+
+<div id="cards" class="cards"></div>
+
+<div class="admin-grid">
+
+<section class="panel">
+
+<div class="panel-title">
+<h3>Pendientes de confirmar</h3>
+<button id="copy-pending" class="plain">Copiar lista</button>
+</div>
+
+<ul id="pending"></ul>
+
+</section>
+
+<section class="panel">
+
+<h3>Actividad reciente</h3>
+
+<ul id="recent"></ul>
+
+</section>
+
+</div>
+
+<section class="panel import">
+
+<h3>Importar invitados</h3>
+
+<p>
+Sube o pega un CSV con cabecera
+<code>nombre,apellidos</code>.
+Las personas ya existentes no se duplicarán.
+</p>
+
+<textarea id="csv" rows="4" placeholder="nombre,apellidos&#10;Ana,Pérez García"></textarea>
+
+<button id="import" class="plain">Importar CSV</button>
+
+<span id="import-result"></span>
+
+</section>
+
+
+<section class="panel album-admin">
+
+<div class="panel-title">
+
+<h3>Recuerdos compartidos</h3>
+
+<div class="filters">
+
+<select id="album-filter">
+<option value="pending">Pendientes</option>
+<option value="approved">Publicados</option>
+<option value="rejected">Rechazados</option>
+<option value="all">Todos</option>
+</select>
+
+</div>
+
+</div>
+
+<div id="album-stats" class="album-stats"></div>
+
+<form id="admin-album-form" class="admin-album-form">
+  <div class="fields">
+    <label>
+      Nombre
+      <input type="text" name="name" maxlength="100" required placeholder="Nombre de quien comparte">
+    </label>
+    <label>
+      Fotos
+      <input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple required>
+    </label>
+  </div>
+  <label>
+    Mensaje <em>(opcional)</em>
+    <textarea name="message" maxlength="280" rows="2" placeholder="Mensaje para acompañar la foto"></textarea>
+  </label>
+  <p class="album-help">Las fotos subidas desde aquí se publican directamente. Máximo 1,8 MB por foto.</p>
+  <button type="submit" class="plain">Subir al álbum</button>
+  <span id="admin-album-result"></span>
+</form>
+
+<div id="album-list" class="album-admin-grid"></div>
+
+</section>
+
+
+<section class="panel guests">
+
+<div class="panel-title">
+
+<h3>Listado de invitados</h3>
+
+<div class="filters">
+
+<input
+id="search"
+placeholder="Buscar por nombre"
+aria-label="Buscar por nombre">
+
+<select id="filter">
+
+<option value="all">Todos</option>
+<option value="confirmed">Confirmados</option>
+<option value="declined">No asistirán</option>
+<option value="pending">Pendientes</option>
+
+</select>
+
+<select id="order">
+
+<option value="date">Ordenar por fecha</option>
+<option value="name">Ordenar por nombre</option>
+
+</select>
+
+</div>
+
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+<th>Nombre</th>
+<th>Apellidos</th>
+<th>Asistencia</th>
+<th>Personas</th>
+<th>Comentarios</th>
+<th>Fecha</th>
+</tr>
+
+</thead>
+
+<tbody id="guest-rows"></tbody>
+
+</table>
+
+</div>
+
+</section>
+
+</section>
+
+</main>
+
+<script src="/admin.js"></script>
+
+</body>
+</html>
