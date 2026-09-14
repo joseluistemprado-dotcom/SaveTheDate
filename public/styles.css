@@ -123,6 +123,24 @@ h3{
   color:var(--ink);
 }
 
+.hero-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.button-secondary{
+  background:transparent;
+  color:var(--ink);
+}
+
+.button-secondary:hover,
+.button-secondary:focus{
+  background:var(--ink);
+  color:var(--paper);
+}
+
 /* FOTOGRAFÍAS */
 
 .photos{
@@ -362,6 +380,14 @@ footer span{
   .hero{
     min-height:680px;
     padding-top:100px;
+  }
+
+  .hero-actions{
+    width:100%;
+  }
+
+  .hero-actions .button{
+    width:min(100%,260px);
   }
 
   .photos{
