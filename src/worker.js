@@ -336,7 +336,13 @@ async function albumImageResponse(request, env, id) {
     return unauthorized();
   }
 
-  return new Response(photo.image, {
+  const image =
+    photo.image instanceof ArrayBuffer ||
+    photo.image instanceof Uint8Array
+      ? photo.image
+      : new Uint8Array(photo.image || []);
+
+  return new Response(image, {
     headers: {
       'content-type': photo.content_type,
       'cache-control': 'no-store',
@@ -404,11 +410,11 @@ async function uploadAlbumPhotos(request, env) {
       );
     }
 
-    if (file.size > 3 * 1024 * 1024) {
+    if (file.size > 1800000) {
       return json(
         {
           error:
-            'Cada imagen debe pesar menos de 3 MB.'
+            'Cada imagen debe pesar menos de 1,8 MB.'
         },
         400
       );
