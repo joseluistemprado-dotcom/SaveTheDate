@@ -193,15 +193,29 @@ async function loadAlbum() {
     const data =
       await response.json();
 
+    const empty =
+      document.querySelector(
+        '#album-empty'
+      );
+
     if (
       !data.photos ||
       !data.photos.length
     ) {
       gallery.hidden = true;
+
+      if (empty) {
+        empty.hidden = false;
+      }
+
       return;
     }
 
     gallery.hidden = false;
+
+    if (empty) {
+      empty.hidden = true;
+    }
 
     gallery.innerHTML =
       data.photos.map(photo => {
