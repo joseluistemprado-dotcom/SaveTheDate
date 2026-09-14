@@ -1,30 +1,30 @@
 const encoder = new TextEncoder();
+const PBKDF2_ITERATIONS = 100000;
 
-const json = (body, status = 200, extra = {}) => new Response(
-  JSON.stringify(body),
-  {
+const json = (body, status = 200, extra = {}) =>
+  new Response(JSON.stringify(body), {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
       ...extra
     }
-  }
-);
+  });
 
-const clean = (value, max = 120) => String(value || '').trim().replace(/[<>]/g, '').slice(0, max);
+const clean = (value, max = 120) =>
+  String(value || '').trim().replace(/[<>]/g, '').slice(0, max);
+
 const now = () => new Date().toISOString();
 
-const hash = async value => {
-  const bytes = new Uint8Array(
+const hash = async value =>
+  [...new Uint8Array(
     await crypto.subtle.digest('SHA-256', encoder.encode(value))
-  );
-  return [...bytes].map(x => x.toString(16).padStart(2, '0')).join('');
-};
-
-const PBKDF2_ITERATIONS = 100000;
+  )]
+    .map(x => x.toString(16).padStart(2, '0'))
+    .join('');
 
 const passwordHash = async password => {
   const salt = crypto.getRandomValues(new Uint8Array(16));
+
   const key = await crypto.subtle.importKey(
     'raw',
     encoder.encode(password),
@@ -36,7 +36,7 @@ const passwordHash = async password => {
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256'
     },
@@ -44,33 +44,24 @@ const passwordHash = async password => {
     256
   );
 
-  const saltHex = [...salt]
-    .map(x => x.toString(16).padStart(2, '0'))
-    .join('');
-
-  const hashHex = [...new Uint8Array(bits)]
-    .map(x => x.toString(16).padStart(2, '0'))
-    .join('');
-
-  return saltHex + ':' + hashHex;
+  return (
+    [...salt].map(x => x.toString(16).padStart(2, '0')).join('') +
+    ':' +
+    [...new Uint8Array(bits)]
+      .map(x => x.toString(16).padStart(2, '0'))
+      .join('')
+  );
 };
 
 const verifyPassword = async (password, stored) => {
-  if (!stored || typeof stored !== 'string') return false;
-
-  const parts = stored.split(':');
-  if (parts.length !== 2) return false;
-
+  const parts = String(stored || '').split(':');
   const saltHex = parts[0];
   const expected = parts[1];
 
   if (!saltHex || !expected) return false;
 
-  const saltParts = saltHex.match(/.{1,2}/g);
-  if (!saltParts) return false;
-
   const salt = Uint8Array.from(
-    saltParts.map(x => parseInt(x, 16))
+    saltHex.match(/.{1,2}/g).map(x => parseInt(x, 16))
   );
 
   const key = await crypto.subtle.importKey(
@@ -84,7 +75,7 @@ const verifyPassword = async (password, stored) => {
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt,
       iterations: PBKDF2_ITERATIONS,
       hash: 'SHA-256'
     },
@@ -96,47 +87,73 @@ const verifyPassword = async (password, stored) => {
     .map(x => x.toString(16).padStart(2, '0'))
     .join('');
 
-  return actual.length === expected.length && actual === expected;
+  return actual === expected;
 };
 
-async function schema(env) {
-  if (!env.DB) {
-    throw new Error('La vinculación D1 "DB" no está configurada.');
-  }
+const photoTypes = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp'
+]);
 
+const unauthorized = () =>
+  json({ error: 'Acceso no autorizado.' }, 401);
+
+const publicPhoto = photo => ({
+  id: photo.id,
+  guest_name: photo.guest_name,
+  message: photo.message,
+  created_at: photo.created_at,
+  url: '/api/album/photos/' + photo.id
+});
+
+async function schema(env) {
   await env.DB.exec(
     'CREATE TABLE IF NOT EXISTS guests (' +
-    'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-    'first_name TEXT NOT NULL,' +
-    'last_name TEXT NOT NULL,' +
-    'created_at TEXT NOT NULL' +
+      'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+      'first_name TEXT NOT NULL,' +
+      'last_name TEXT NOT NULL,' +
+      'created_at TEXT NOT NULL' +
     ');' +
 
     'CREATE TABLE IF NOT EXISTS responses (' +
-    'id TEXT PRIMARY KEY,' +
-    'guest_id INTEGER UNIQUE NOT NULL,' +
-    'attending INTEGER NOT NULL,' +
-    'attendees INTEGER NOT NULL DEFAULT 0,' +
-    'comments TEXT,' +
-    'created_at TEXT NOT NULL' +
+      'id TEXT PRIMARY KEY,' +
+      'guest_id INTEGER UNIQUE NOT NULL,' +
+      'attending INTEGER NOT NULL,' +
+      'attendees INTEGER NOT NULL DEFAULT 0,' +
+      'comments TEXT,' +
+      'created_at TEXT NOT NULL' +
     ');' +
 
     'CREATE TABLE IF NOT EXISTS admin_users (' +
-    'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-    'username TEXT UNIQUE NOT NULL,' +
-    'password_hash TEXT NOT NULL,' +
-    'created_at TEXT NOT NULL' +
+      'id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+      'username TEXT UNIQUE NOT NULL,' +
+      'password_hash TEXT NOT NULL,' +
+      'created_at TEXT NOT NULL' +
     ');' +
 
     'CREATE TABLE IF NOT EXISTS sessions (' +
-    'token_hash TEXT PRIMARY KEY,' +
-    'admin_id INTEGER NOT NULL,' +
-    'expires_at TEXT NOT NULL' +
+      'token_hash TEXT PRIMARY KEY,' +
+      'admin_id INTEGER NOT NULL,' +
+      'expires_at TEXT NOT NULL' +
     ');' +
 
     'CREATE TABLE IF NOT EXISTS settings (' +
-    'key TEXT PRIMARY KEY,' +
-    'value TEXT NOT NULL' +
+      'key TEXT PRIMARY KEY,' +
+      'value TEXT NOT NULL' +
+    ');' +
+
+    'CREATE TABLE IF NOT EXISTS album_photos (' +
+      'id TEXT PRIMARY KEY,' +
+      'guest_name TEXT NOT NULL,' +
+      'message TEXT,' +
+      'filename TEXT NOT NULL,' +
+      'content_type TEXT NOT NULL,' +
+      'image BLOB NOT NULL,' +
+      'status TEXT NOT NULL DEFAULT "pending" ' +
+        'CHECK(status IN ("pending","approved","rejected")),' +
+      'created_at TEXT NOT NULL,' +
+      'reviewed_at TEXT' +
     ');'
   );
 
@@ -148,21 +165,23 @@ async function schema(env) {
   const fingerprint = await hash(username + '\0' + password);
 
   const saved = await env.DB
-    .prepare("SELECT value FROM settings WHERE key = 'admin_credentials'")
+    .prepare("SELECT value FROM settings WHERE key='admin_credentials'")
     .first();
 
   if (saved && saved.value === fingerprint) return;
 
-  const credentials = await passwordHash(password);
-
   const account = await env.DB
-    .prepare('SELECT id FROM admin_users WHERE username = ?')
+    .prepare('SELECT id FROM admin_users WHERE username=?')
     .bind(username)
     .first();
 
+  const credentials = await passwordHash(password);
+
   if (account) {
     await env.DB
-      .prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?')
+      .prepare(
+        'UPDATE admin_users SET password_hash=? WHERE id=?'
+      )
       .bind(credentials, account.id)
       .run();
   } else {
@@ -172,13 +191,15 @@ async function schema(env) {
 
     if (existing) {
       await env.DB
-        .prepare('UPDATE admin_users SET username = ?, password_hash = ? WHERE id = ?')
+        .prepare(
+          'UPDATE admin_users SET username=?,password_hash=? WHERE id=?'
+        )
         .bind(username, credentials, existing.id)
         .run();
     } else {
       await env.DB
         .prepare(
-          'INSERT INTO admin_users(username, password_hash, created_at) VALUES (?, ?, ?)'
+          'INSERT INTO admin_users(username,password_hash,created_at) VALUES (?,?,?)'
         )
         .bind(username, credentials, now())
         .run();
@@ -187,43 +208,68 @@ async function schema(env) {
 
   await env.DB
     .prepare(
-      "INSERT INTO settings(key, value) VALUES ('admin_credentials', ?) " +
-      "ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+      "INSERT INTO settings(key,value) VALUES ('admin_credentials',?) " +
+      'ON CONFLICT(key) DO UPDATE SET value=excluded.value'
     )
     .bind(fingerprint)
     .run();
 }
 
 async function stats(env) {
-  return env.DB.prepare(
-    'SELECT ' +
-    '(SELECT count(*) FROM guests) total,' +
-    '(SELECT count(*) FROM responses WHERE attending = 1) confirmed,' +
-    '(SELECT count(*) FROM responses WHERE attending = 0) declined,' +
-    '(SELECT count(*) FROM guests g WHERE NOT EXISTS (' +
-    'SELECT 1 FROM responses r WHERE r.guest_id = g.id' +
-    ')) pending,' +
-    '(SELECT coalesce(sum(attendees), 0) FROM responses WHERE attending = 1) people'
-  ).first();
+  return env.DB
+    .prepare(
+      'SELECT ' +
+      '(SELECT count(*) FROM guests) total,' +
+      '(SELECT count(*) FROM responses WHERE attending=1) confirmed,' +
+      '(SELECT count(*) FROM responses WHERE attending=0) declined,' +
+      '(SELECT count(*) FROM guests g WHERE NOT EXISTS (' +
+        'SELECT 1 FROM responses r WHERE r.guest_id=g.id' +
+      ')) pending,' +
+      '(SELECT coalesce(sum(attendees),0) FROM responses WHERE attending=1) people'
+    )
+    .first();
+}
+
+async function albumStats(env) {
+  return env.DB
+    .prepare(
+      'SELECT ' +
+      '(SELECT count(*) FROM album_photos) total,' +
+      '(SELECT count(*) FROM album_photos WHERE status="pending") pending,' +
+      '(SELECT count(*) FROM album_photos WHERE status="approved") approved,' +
+      '(SELECT count(*) FROM album_photos WHERE status="rejected") rejected'
+    )
+    .first();
 }
 
 async function rows(env, status = 'all', search = '', order = 'date') {
   let where = '';
   const args = [];
 
-  if (status === 'confirmed') where = ' WHERE r.attending = 1';
-  if (status === 'declined') where = ' WHERE r.attending = 0';
-  if (status === 'pending') where = ' WHERE r.id IS NULL';
+  if (status === 'confirmed') {
+    where = ' WHERE r.attending=1';
+  }
+
+  if (status === 'declined') {
+    where = ' WHERE r.attending=0';
+  }
+
+  if (status === 'pending') {
+    where = ' WHERE r.id IS NULL';
+  }
 
   if (search) {
-    where += (where ? ' AND' : ' WHERE') +
-      " lower(g.first_name || ' ' || g.last_name) LIKE ?";
+    where +=
+      (where ? ' AND' : ' WHERE') +
+      ' lower(g.first_name || " " || g.last_name) LIKE ?';
+
     args.push('%' + search.toLowerCase() + '%');
   }
 
-  const ordering = order === 'name'
-    ? 'g.last_name, g.first_name'
-    : 'r.created_at DESC';
+  const ordering =
+    order === 'name'
+      ? 'g.last_name,g.first_name'
+      : 'r.created_at DESC';
 
   const result = await env.DB
     .prepare(
@@ -237,7 +283,7 @@ async function rows(env, status = 'all', search = '', order = 'date') {
       'r.comments,' +
       'r.created_at ' +
       'FROM guests g ' +
-      'LEFT JOIN responses r ON r.guest_id = g.id' +
+      'LEFT JOIN responses r ON r.guest_id=g.id' +
       where +
       ' ORDER BY ' +
       ordering
@@ -250,7 +296,7 @@ async function rows(env, status = 'all', search = '', order = 'date') {
 
 function token(request) {
   const cookie = request.headers.get('Cookie') || '';
-  const match = cookie.match(/(?:^|;\s*)rsvp_admin=([^;]+)/);
+  const match = cookie.match(/(?:^|; )rsvp_admin=([^;]+)/);
   return match ? match[1] : null;
 }
 
@@ -262,7 +308,7 @@ async function admin(request, env) {
   const row = await env.DB
     .prepare(
       'SELECT admin_id FROM sessions ' +
-      'WHERE token_hash = ? AND expires_at > ?'
+      'WHERE token_hash=? AND expires_at>?'
     )
     .bind(await hash(value), now())
     .first();
@@ -270,22 +316,153 @@ async function admin(request, env) {
   return !!row;
 }
 
-const unauthorized = () => json(
-  { error: 'Acceso no autorizado.' },
-  401
-);
+async function albumImageResponse(request, env, id) {
+  const photo = await env.DB
+    .prepare(
+      'SELECT id,filename,content_type,image,status ' +
+      'FROM album_photos WHERE id=?'
+    )
+    .bind(id)
+    .first();
+
+  if (!photo) {
+    return json({ error: 'Imagen no encontrada.' }, 404);
+  }
+
+  if (
+    photo.status !== 'approved' &&
+    !(await admin(request, env))
+  ) {
+    return unauthorized();
+  }
+
+  return new Response(photo.image, {
+    headers: {
+      'content-type': photo.content_type,
+      'cache-control': 'no-store',
+      'content-disposition':
+        'inline; filename="' +
+        String(photo.filename || 'recuerdo.jpg').replaceAll('"', '') +
+        '"'
+    }
+  });
+}
+
+async function uploadAlbumPhotos(request, env) {
+  const form = await request.formData().catch(() => null);
+
+  if (!form) {
+    return json(
+      { error: 'No se han podido leer las imágenes.' },
+      400
+    );
+  }
+
+  const name = clean(form.get('name'), 100);
+  const message = clean(form.get('message'), 280);
+  const website = clean(form.get('website'), 20);
+
+  if (website) {
+    return json(
+      { error: 'No se han podido enviar las imágenes.' },
+      400
+    );
+  }
+
+  const files = form
+    .getAll('photos')
+    .filter(file => file && typeof file === 'object' && file.size > 0);
+
+  if (!name || !files.length) {
+    return json(
+      {
+        error:
+          'Indica tu nombre y adjunta al menos una imagen.'
+      },
+      400
+    );
+  }
+
+  if (files.length > 6) {
+    return json(
+      {
+        error:
+          'Puedes enviar hasta 6 imágenes cada vez.'
+      },
+      400
+    );
+  }
+
+  for (const file of files) {
+    if (!photoTypes.has(file.type)) {
+      return json(
+        {
+          error:
+            'Solo se aceptan imágenes JPG, PNG o WEBP.'
+        },
+        400
+      );
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      return json(
+        {
+          error:
+            'Cada imagen debe pesar menos de 3 MB.'
+        },
+        400
+      );
+    }
+  }
+
+  for (const file of files) {
+    const id = crypto.randomUUID();
+
+    const filename =
+      clean(file.name, 140) || 'recuerdo.jpg';
+
+    await env.DB
+      .prepare(
+        'INSERT INTO album_photos(' +
+        'id,guest_name,message,filename,content_type,image,status,created_at' +
+        ') VALUES (?,?,?,?,?,?,?,?)'
+      )
+      .bind(
+        id,
+        name,
+        message || null,
+        filename,
+        file.type,
+        await file.arrayBuffer(),
+        'pending',
+        now()
+      )
+      .run();
+  }
+
+  return json(
+    { count: files.length },
+    201
+  );
+}
 
 async function api(request, env, url) {
   await schema(env);
 
   const path = url.pathname;
 
-  if (path === '/api/respond' && request.method === 'POST') {
+  if (
+    path === '/api/respond' &&
+    request.method === 'POST'
+  ) {
     const body = await request.json().catch(() => ({}));
 
     if (body.website) {
       return json(
-        { error: 'No ha sido posible enviar la confirmación.' },
+        {
+          error:
+            'No ha sido posible enviar la confirmación.'
+        },
         400
       );
     }
@@ -293,7 +470,9 @@ async function api(request, env, url) {
     const first = clean(body.firstName, 60);
     const last = clean(body.lastName, 100);
     const note = clean(body.comments, 700);
-    const yes = body.attending === true || body.attending === 'yes';
+    const yes =
+      body.attending === true ||
+      body.attending === 'yes';
     const count = Number(body.attendees);
 
     if (
@@ -310,7 +489,10 @@ async function api(request, env, url) {
       )
     ) {
       return json(
-        { error: 'Revisa los campos indicados antes de enviar.' },
+        {
+          error:
+            'Revisa los campos indicados antes de enviar.'
+        },
         400
       );
     }
@@ -318,8 +500,8 @@ async function api(request, env, url) {
     let guest = await env.DB
       .prepare(
         'SELECT id FROM guests ' +
-        'WHERE lower(first_name) = lower(?) ' +
-        'AND lower(last_name) = lower(?)'
+        'WHERE lower(first_name)=lower(?) ' +
+        'AND lower(last_name)=lower(?)'
       )
       .bind(first, last)
       .first();
@@ -327,13 +509,15 @@ async function api(request, env, url) {
     if (!guest) {
       const result = await env.DB
         .prepare(
-          'INSERT INTO guests(first_name, last_name, created_at) ' +
-          'VALUES (?, ?, ?)'
+          'INSERT INTO guests(first_name,last_name,created_at) ' +
+          'VALUES (?,?,?)'
         )
         .bind(first, last, now())
         .run();
 
-      guest = { id: result.meta.last_row_id };
+      guest = {
+        id: result.meta.last_row_id
+      };
     }
 
     const id = crypto.randomUUID();
@@ -341,14 +525,14 @@ async function api(request, env, url) {
     await env.DB
       .prepare(
         'INSERT INTO responses(' +
-        'id, guest_id, attending, attendees, comments, created_at' +
-        ') VALUES (?, ?, ?, ?, ?, ?) ' +
+        'id,guest_id,attending,attendees,comments,created_at' +
+        ') VALUES (?,?,?,?,?,?) ' +
         'ON CONFLICT(guest_id) DO UPDATE SET ' +
-        'id = excluded.id,' +
-        'attending = excluded.attending,' +
-        'attendees = excluded.attendees,' +
-        'comments = excluded.comments,' +
-        'created_at = excluded.created_at'
+        'id=excluded.id,' +
+        'attending=excluded.attending,' +
+        'attendees=excluded.attendees,' +
+        'comments=excluded.comments,' +
+        'created_at=excluded.created_at'
       )
       .bind(
         id,
@@ -361,42 +545,101 @@ async function api(request, env, url) {
       .run();
 
     return json(
-      { id, attending: yes },
+      {
+        id,
+        attending: yes
+      },
       201
     );
   }
 
-  if (path === '/api/admin/login' && request.method === 'POST') {
+  if (
+    path === '/api/album' &&
+    request.method === 'GET'
+  ) {
+    const photos = (
+      await env.DB
+        .prepare(
+          'SELECT id,guest_name,message,created_at ' +
+          'FROM album_photos ' +
+          'WHERE status="approved" ' +
+          'ORDER BY created_at DESC'
+        )
+        .all()
+    ).results;
+
+    return json({
+      photos: photos.map(publicPhoto)
+    });
+  }
+
+  if (
+    path === '/api/album/photos' &&
+    request.method === 'POST'
+  ) {
+    return uploadAlbumPhotos(request, env);
+  }
+
+  const photoMatch =
+    path.match(
+      /^\/api\/album\/photos\/([0-9a-f-]{36})$/
+    );
+
+  if (
+    photoMatch &&
+    request.method === 'GET'
+  ) {
+    return albumImageResponse(
+      request,
+      env,
+      photoMatch[1]
+    );
+  }
+
+  if (
+    path === '/api/admin/login' &&
+    request.method === 'POST'
+  ) {
     const body = await request.json().catch(() => ({}));
     const user = clean(body.username, 80);
-    const password = String(body.password || '');
 
     const record = await env.DB
       .prepare(
-        'SELECT * FROM admin_users WHERE username = ?'
+        'SELECT * FROM admin_users WHERE username=?'
       )
       .bind(user)
       .first();
 
     if (
       !record ||
-      !(await verifyPassword(password, record.password_hash))
+      !(await verifyPassword(
+        String(body.password || ''),
+        record.password_hash
+      ))
     ) {
       return json(
-        { error: 'Usuario o contraseña incorrectos.' },
+        {
+          error:
+            'Usuario o contraseña incorrectos.'
+        },
         401
       );
     }
 
-    const value = crypto.randomUUID() + crypto.randomUUID();
-    const expiry = new Date(
-      Date.now() + 8 * 60 * 60 * 1000
-    ).toISOString();
+    const value =
+      crypto.randomUUID() +
+      crypto.randomUUID();
+
+    const expiry =
+      new Date(
+        Date.now() + 8 * 3600000
+      ).toISOString();
 
     await env.DB
       .prepare(
-        'INSERT INTO sessions(token_hash, admin_id, expires_at) ' +
-        'VALUES (?, ?, ?)'
+        'INSERT INTO sessions(' +
+        'token_hash,admin_id,expires_at' +
+        ') VALUES (?,?,?)'
       )
       .bind(
         await hash(value),
@@ -410,19 +653,23 @@ async function api(request, env, url) {
       200,
       {
         'Set-Cookie':
-          'rsvp_admin=' + value +
+          'rsvp_admin=' +
+          value +
           '; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=28800'
       }
     );
   }
 
-  if (path === '/api/admin/logout' && request.method === 'POST') {
+  if (
+    path === '/api/admin/logout' &&
+    request.method === 'POST'
+  ) {
     const value = token(request);
 
     if (value) {
       await env.DB
         .prepare(
-          'DELETE FROM sessions WHERE token_hash = ?'
+          'DELETE FROM sessions WHERE token_hash=?'
         )
         .bind(await hash(value))
         .run();
@@ -440,7 +687,8 @@ async function api(request, env, url) {
 
   if (path === '/api/admin/me') {
     return json({
-      authenticated: await admin(request, env)
+      authenticated:
+        await admin(request, env)
     });
   }
 
@@ -448,45 +696,135 @@ async function api(request, env, url) {
     return unauthorized();
   }
 
-  if (path === '/api/admin/dashboard') {
-    const recent = await env.DB
-      .prepare(
-        'SELECT ' +
-        'g.first_name,' +
-        'g.last_name,' +
-        'r.attending,' +
-        'r.attendees,' +
-        'r.created_at ' +
-        'FROM responses r ' +
-        'JOIN guests g ON r.guest_id = g.id ' +
-        'ORDER BY r.created_at DESC ' +
-        'LIMIT 8'
-      )
-      .all();
-
+  if (
+    path === '/api/admin/dashboard'
+  ) {
     return json({
       stats: await stats(env),
-      pending: (await rows(env, 'pending')).slice(0, 10),
-      recent: recent.results
+      album: await albumStats(env),
+      pending:
+        (
+          await rows(env, 'pending')
+        ).slice(0, 10),
+      recent:
+        (
+          await env.DB
+            .prepare(
+              'SELECT g.first_name,g.last_name,' +
+              'r.attending,r.attendees,r.created_at ' +
+              'FROM responses r ' +
+              'JOIN guests g ON r.guest_id=g.id ' +
+              'ORDER BY r.created_at DESC LIMIT 8'
+            )
+            .all()
+        ).results
     });
   }
 
-  if (path === '/api/admin/guests') {
+  if (
+    path === '/api/admin/guests'
+  ) {
     return json({
       stats: await stats(env),
       rows: await rows(
         env,
         url.searchParams.get('status') || 'all',
-        clean(url.searchParams.get('search'), 100),
+        clean(
+          url.searchParams.get('search'),
+          100
+        ),
         url.searchParams.get('order') || 'date'
       )
     });
   }
 
-  if (path === '/api/admin/import' && request.method === 'POST') {
-    const body = await request.json().catch(() => ({}));
-    const csv = String(body.csv || '').replace(/^\uFEFF/, '');
-    const lines = csv.split(/\r?\n/).filter(Boolean);
+  if (
+    path === '/api/admin/album'
+  ) {
+    const status =
+      url.searchParams.get('status') ||
+      'all';
+
+    const args = [];
+    let where = '';
+
+    if (
+      ['pending', 'approved', 'rejected']
+        .includes(status)
+    ) {
+      where = ' WHERE status=?';
+      args.push(status);
+    }
+
+    const photos = (
+      await env.DB
+        .prepare(
+          'SELECT id,guest_name,message,filename,' +
+          'content_type,status,created_at,reviewed_at ' +
+          'FROM album_photos' +
+          where +
+          ' ORDER BY created_at DESC'
+        )
+        .bind(...args)
+        .all()
+    ).results;
+
+    return json({
+      stats: await albumStats(env),
+      photos: photos.map(photo => ({
+        ...photo,
+        url:
+          '/api/album/photos/' +
+          photo.id
+      }))
+    });
+  }
+
+  const albumAction =
+    path.match(
+      /^\/api\/admin\/album\/([0-9a-f-]{36})\/(approve|reject)$/
+    );
+
+  if (
+    albumAction &&
+    request.method === 'POST'
+  ) {
+    const status =
+      albumAction[2] === 'approve'
+        ? 'approved'
+        : 'rejected';
+
+    await env.DB
+      .prepare(
+        'UPDATE album_photos ' +
+        'SET status=?,reviewed_at=? ' +
+        'WHERE id=?'
+      )
+      .bind(
+        status,
+        now(),
+        albumAction[1]
+      )
+      .run();
+
+    return json({ ok: true });
+  }
+
+  if (
+    path === '/api/admin/import' &&
+    request.method === 'POST'
+  ) {
+    const body =
+      await request.json().catch(() => ({}));
+
+    const csv =
+      String(body.csv || '')
+        .replace(/^\uFEFF/, '');
+
+    const lines =
+      csv
+        .split(/\r?\n/)
+        .filter(Boolean);
 
     if (!lines.length) {
       return json(
@@ -498,59 +836,81 @@ async function api(request, env, url) {
     let count = 0;
 
     for (const line of lines.slice(1)) {
-      const [f, ...rest] = line.split(',');
-      const first = clean(f, 60);
-      const last = clean(rest.join(','), 100);
+      const parts = line.split(',');
+      const first = clean(parts.shift(), 60);
+      const last = clean(parts.join(','), 100);
 
-      if (!first || !last) continue;
-
-      const exists = await env.DB
-        .prepare(
-          'SELECT id FROM guests ' +
-          'WHERE lower(first_name) = lower(?) ' +
-          'AND lower(last_name) = lower(?)'
-        )
-        .bind(first, last)
-        .first();
-
-      if (!exists) {
-        await env.DB
+      if (first && last) {
+        const exists = await env.DB
           .prepare(
-            'INSERT INTO guests(first_name, last_name, created_at) ' +
-            'VALUES (?, ?, ?)'
+            'SELECT id FROM guests ' +
+            'WHERE lower(first_name)=lower(?) ' +
+            'AND lower(last_name)=lower(?)'
           )
-          .bind(first, last, now())
-          .run();
+          .bind(first, last)
+          .first();
 
-        count++;
+        if (!exists) {
+          await env.DB
+            .prepare(
+              'INSERT INTO guests(' +
+              'first_name,last_name,created_at' +
+              ') VALUES (?,?,?)'
+            )
+            .bind(
+              first,
+              last,
+              now()
+            )
+            .run();
+
+          count++;
+        }
       }
     }
 
     return json({ count });
   }
 
-  if (path === '/api/admin/export.csv') {
+  if (
+    path === '/api/admin/export.csv'
+  ) {
     const esc = value =>
-      '"' + String(value ?? '').replaceAll('"', '""') + '"';
+      '"' +
+      String(value ?? '')
+        .replaceAll('"', '""') +
+      '"';
 
-    const data = (await rows(env)).map(r => [
-      r.first_name,
-      r.last_name,
-      r.response_id
-        ? (r.attending ? 'Sí' : 'No')
-        : 'Pendiente',
-      r.attendees || '',
-      r.comments || '',
-      r.created_at || ''
-    ].map(esc).join(','));
+    const data =
+      (
+        await rows(env)
+      )
+        .map(row =>
+          [
+            row.first_name,
+            row.last_name,
+            row.response_id
+              ? row.attending
+                ? 'Sí'
+                : 'No'
+              : 'Pendiente',
+            row.attendees || '',
+            row.comments || '',
+            row.created_at || ''
+          ]
+            .map(esc)
+            .join(',')
+        );
 
     return new Response(
       '\uFEFFNombre,Apellidos,Asistencia,Número de asistentes,Comentarios,Fecha de respuesta\n' +
       data.join('\n'),
       {
         headers: {
-          'content-type': 'text/csv; charset=utf-8',
-          'content-disposition': 'attachment; filename="confirmaciones.csv"'
+          'content-type':
+            'text/csv; charset=utf-8',
+          'content-disposition':
+            'attachment; filename="confirmaciones.csv"'
         }
       }
     );
@@ -567,26 +927,31 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
-      try {
-        return await api(request, env, url);
-      } catch (error) {
-        console.error('API error:', error);
-        return json(
-          { error: 'No se ha podido completar la acción.' },
-          500
-        );
-      }
+      return api(request, env, url);
     }
 
-    const response = await env.ASSETS.fetch(request);
-    const headers = new Headers(response.headers);
+    const response =
+      await env.ASSETS.fetch(request);
 
-    headers.set('X-Content-Type-Options', 'nosniff');
-    headers.set('Referrer-Policy', 'same-origin');
+    const headers =
+      new Headers(response.headers);
 
-    return new Response(response.body, {
-      status: response.status,
-      headers
-    });
+    headers.set(
+      'X-Content-Type-Options',
+      'nosniff'
+    );
+
+    headers.set(
+      'Referrer-Policy',
+      'same-origin'
+    );
+
+    return new Response(
+      response.body,
+      {
+        status: response.status,
+        headers
+      }
+    );
   }
 };
