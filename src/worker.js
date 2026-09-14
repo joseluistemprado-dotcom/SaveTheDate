@@ -354,7 +354,7 @@ async function albumImageResponse(request, env, id) {
   });
 }
 
-async function uploadAlbumPhotos(request, env) {
+async function uploadAlbumPhotos(request, env, initialStatus = 'pending') {
   const form = await request.formData().catch(() => null);
 
   if (!form) {
@@ -745,6 +745,13 @@ async function api(request, env, url) {
   }
 
   if (
+    path === '/api/admin/album/photos' &&
+    request.method === 'POST'
+  ) {
+    return uploadAlbumPhotos(request, env, 'approved');
+  }
+
+  if (
     path === '/api/admin/album'
   ) {
     const status =
@@ -790,6 +797,25 @@ async function api(request, env, url) {
     path.match(
       /^\/api\/admin\/album\/([0-9a-f-]{36})\/(approve|reject)$/
     );
+
+  const albumDelete =
+    path.match(
+      /^\/api\/admin\/album\/([0-9a-f-]{36})$/
+    );
+
+  if (
+    albumDelete &&
+    request.method === 'DELETE'
+  ) {
+    await env.DB
+      .prepare(
+        'DELETE FROM album_photos WHERE id=?'
+      )
+      .bind(albumDelete[1])
+      .run();
+
+    return json({ ok: true });
+  }
 
   if (
     albumAction &&
