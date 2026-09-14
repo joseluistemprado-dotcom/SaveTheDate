@@ -13,15 +13,18 @@
 
 html{
   scroll-behavior:smooth;
+  overflow-x:hidden;
 }
 
 body{
+  width:100%;
   margin:0;
   background:var(--paper);
   color:var(--ink);
   font-family:'DM Sans',sans-serif;
   font-size:16px;
   line-height:1.6;
+  overflow-x:hidden;
 }
 
 .wrap{
@@ -36,6 +39,7 @@ body{
 /* HERO */
 
 .hero{
+  width:100%;
   text-align:center;
   min-height:min(760px,100svh);
   padding:15vh 24px 90px;
@@ -68,10 +72,12 @@ h3{
 }
 
 .hero h1{
-  font-size:clamp(4.2rem,11vw,8.6rem);
-  line-height:.78;
-  letter-spacing:-.055em;
+  max-width:calc(100vw - 32px);
+  font-size:clamp(3.7rem,10vw,7.6rem);
+  line-height:.82;
+  letter-spacing:0;
   margin:0;
+  overflow-wrap:break-word;
 }
 
 .hero h1 i{
@@ -437,9 +443,11 @@ footer span{
   }
 
   .hero h1{
-    font-size:4.4rem;
+    font-size:3.6rem;
   }
-  .album-section {
+}
+
+.album-section {
   padding: 80px 0;
   text-align: center;
 }
@@ -517,5 +525,4 @@ footer span{
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
-}
 }
