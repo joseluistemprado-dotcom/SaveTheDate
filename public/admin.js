@@ -35,16 +35,26 @@ async function api(url, opts) {
 }
 
 function date(value) {
+  const normalized =
+    /(?:Z|[+-]\d\d:?\d\d)$/.test(value || '')
+      ? value
+      : value + 'Z';
+
+  const parsed =
+    value
+      ? new Date(normalized)
+      : null;
+
   return value
-    ? new Intl.DateTimeFormat(
+    ? Number.isNaN(parsed.getTime())
+      ? '—'
+      : new Intl.DateTimeFormat(
         'es-ES',
         {
           dateStyle: 'short',
           timeStyle: 'short'
         }
-      ).format(
-        new Date(value + 'Z')
-      )
+      ).format(parsed)
     : '—';
 }
 
