@@ -413,4 +413,83 @@ footer span{
   .hero h1{
     font-size:4.4rem;
   }
+  .album-section {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.album-form {
+  max-width: 620px;
+  margin: 32px auto 0;
+  text-align: left;
+  display: grid;
+  gap: 18px;
+}
+
+.album-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.album-form input,
+.album-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.album-help {
+  font-size: .88rem;
+  opacity: .72;
+  margin: -8px 0 0;
+}
+
+#album-result {
+  min-height: 24px;
+  margin: 0;
+}
+
+#album-result.success {
+  color: #536b55;
+}
+
+#album-result.error {
+  color: #a34d4d;
+}
+
+.album-gallery {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.album-photo {
+  margin: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.album-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.album-photo-info {
+  padding: 12px;
+  text-align: left;
+}
+
+.album-photo-info p {
+  margin: 6px 0 0;
+  font-size: .9rem;
+}
+
+@media (max-width: 700px) {
+  .album-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
 }
