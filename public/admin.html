@@ -124,6 +124,26 @@ Las personas ya existentes no se duplicarán.
 
 <div id="album-stats" class="album-stats"></div>
 
+<form id="admin-album-form" class="admin-album-form">
+  <div class="fields">
+    <label>
+      Nombre
+      <input type="text" name="name" maxlength="100" required placeholder="Nombre de quien comparte">
+    </label>
+    <label>
+      Fotos
+      <input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple required>
+    </label>
+  </div>
+  <label>
+    Mensaje <em>(opcional)</em>
+    <textarea name="message" maxlength="280" rows="2" placeholder="Mensaje para acompañar la foto"></textarea>
+  </label>
+  <p class="album-help">Las fotos subidas desde aquí se publican directamente. Máximo 1,8 MB por foto.</p>
+  <button type="submit" class="plain">Subir al álbum</button>
+  <span id="admin-album-result"></span>
+</form>
+
 <div id="album-list" class="album-admin-grid"></div>
 
 </section>
